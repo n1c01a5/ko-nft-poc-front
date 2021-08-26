@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from "react";
 import {ethers} from 'ethers'
+import axios from "axios";
 
 import ConnectWeb3 from './components/connect-web3'
 import KoChildERC721MintableTokenContractAbi from './contract/KoChildERC721MintableToken.json'
@@ -14,7 +15,9 @@ function App() {
   const [name, setName] = useState("");
   const [symbol, setSymbol] = useState("");
   const [description, setDescription] = useState("");
-
+  const [balance, setBalance] = useState(0);
+  const [listNft, setListNft] = useState();
+ 
   /**
    * When contract
    */
@@ -24,8 +27,20 @@ function App() {
       const uriNFT = uri;
       sendMintNFT({uriNFT});
     }
+    childBalance ();
+    list ();
   }, [contract]);
 
+  useEffect(() => {
+    list ();
+  }, [balance]);
+
+  // useEffect(() => {
+  //   console.log(listNft);
+  // }, [listNft]);
+
+
+  
 
   const mintNFT = async (event) => {
     event.preventDefault();
@@ -136,8 +151,56 @@ function App() {
     const resp = await contract.connect(signer).ownerOf(tokenId);
     return resp;
   }
+  
+  const childBalance = () => {
+    // Make a request for a user with a given ID
+    axios.post(`http://localhost:3000/api/child/balance`, {
+      owner: "0x43e6B95803ac909f31C46517691cd2e33e298e40",
+      nftAddress:"0xC13bF24Cc00564fA00C7161ea4DCCDd4E00e1d1C"})
+    .then(function (response) {
+      // handle success
+      console.log(response);
+      console.log(response.data.balanceOf);
+      setBalance(response.data.balanceOf);
+    })
+    .catch(function (error) {
+      // handle error
+      console.log(error);
+    });
+  }
 
+  const list = () => {
+    setListNft ([]);
+    for (let i = 0; i < balance; i++) {
+      axios.post(`http://localhost:3000/api/child/tokenByIndex`, {
+        owner: "0x43e6B95803ac909f31C46517691cd2e33e298e40",
+        nftAddress: "0xC13bF24Cc00564fA00C7161ea4DCCDd4E00e1d1C",
+        index:i
+      })
+      .then(function (response) {
+        // handle success
+        setListNft(oldListNft => [...oldListNft, response.data.tokenByIndex].sort(function(a, b) {
+          return a - b;
+        }));
+        //listNft.push(response.data.tokenByIndex);
+      
+        //console.log("listNFT",listNft);
+      })  
+      .catch(function (error) {
+        // handle error
+        console.log(error);
+      });     
+    }
+  }
 
+  const nftListRender = () => {
+    if (listNft && listNft.length > 0) {
+      return listNft.map((nft, index) => {
+        console.log(index, nft);
+        return <div key={index}>{nft}</div>
+      })
+    }
+  }
   return (
     <div className="App">
       <header className="App-header">
@@ -193,7 +256,12 @@ function App() {
 
       </form>
 
-
+      <div>
+        <h2>User NFT</h2>
+        balance:{balance}
+        <p>List of NFTs</p>
+        id:{nftListRender()}
+      </div>
 
 
     </div>
