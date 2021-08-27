@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { ethers } from 'ethers'
 
 // import StorageABI from '../contract/storage.json'
@@ -30,5 +30,10 @@ export default function ConnectWeb3() {
 
   }, [])
 
-  return <div>Connect with {addressSigner}</div>
+  return (
+    <div>
+      <div style={{fontWeight:"bold"}}>User Wallet</div>
+      {addressSigner}
+    </div>
+  );
 }
